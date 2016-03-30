@@ -12,7 +12,7 @@ Hello-word: https://guides.github.com/activities/hello-world
 
 Xiao qiang: https://github.com/longze/my-cellar
 
-            https://longze.github.io/#!/
+            https://longze.github.io/#!
             
 A Tutoria:  http://www.liaoxuefeng.com/wiki/0013739516305929606dd18361248578c67b8067c8c017b000
 
