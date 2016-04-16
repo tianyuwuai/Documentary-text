@@ -1,0 +1,130 @@
+我们在linux常常用到一个程序需要加入参数,现在了解一下 perl 中的有关控制参数的模块 Getopt::Long ,比直接使用 @ARGV 的数组强大多了.我想大家知道在 Linux 中有的参数有二种形式.
+
+•长参数  –help
+•短参数   -h
+也就是-和–的分别.–表示完整参数.-表示简化参数.在 Perl 的这个模块中也支持这二种方法.
+这要介绍的二 Getopt 其实有二个模块,一个叫 Getopt::Long 一个叫 Getopt::Std.下面就只介绍 Getopt::Long 了.因为这个模块更加强大
+
+Getopt::Long 模块
+初始化 Perl命令行中所接受的参数,简化了命令行参数的解析.下面看程序的例子
+
+
+复制代码 代码如下:
+#!/usr/bin/perl 
+use strict; 
+use Getopt::Long; 
+use Smart::Comments; 
+
+my @libs    = ();  
+my %flags   = ();  
+my ( $verbose, $all, $more, $diam, $debug, $test, $step); 
+
+GetOptions( 
+        'verbose+'  => \$verbose, 
+        'more!'     => \$more, 
+        'debug:i'   => \$debug, 
+        'lib=s'     => \@libs, 
+        'flag=s'    => \%flags, 
+        'test|t'    => \$test, 
+        'all|everything|universe' => $all, 
+); 
+
+### $verbose 
+### $more 
+### $debug 
+### $test 
+### @libs; 
+### %flags
+
+这就是使用的方法,下面是详细解释,注意看 GetOptions 中的 => 前面的部分.下面是详解
+
+•‘verbose+'  接有 + 的选项不接收变量,后面不需要加内容.直接使用就行了,会在每次出现时增加一次变量,就是讲命行时在参数中 -verbose -verbose 出现二次时 verbose 的值就会变成 2.
+•‘more!'        接有 ! 的选项不接收变量(也就是讲后面不需要加参数 –more 来使用就行了),只要命令行中出现了这个参数,就会默认是 1 ,是用来设置打开和关掉一个功能的>.可以在参数前加 no 变成负的例如-nomore.
+•‘flag=s'        接有 = 的字符串要求接字符串（s）、整数（i）,或者浮点（f）等类型的变量.
+•‘debug:i'      接有 : 的选项会接受缺省为0或者为空字符串的可选变量 
+•‘test|t'          接有 | 的选项表示可以给 –test 简写为 -t.
+•‘lib=s'     => @libs    如果相关联的变量是个数组, 如这个地方的 @libs, 那么选项可以多次出现, 值可以被推到数组里.
+•‘flag=s'    => %flags  如果相关联的变量是个散列, 那么就要求一个键=值（key=value）对, 并被插入到散列里.
+
+备注:
+     在匹配参数名的时候,GetOptions 在缺省设置下会忽略大小写,默认参数被简写为唯一的最短字符串(首字母)（例如,-m 代表 -more. 相同的首字母时,会加上第二个字母来区分)
+
+Getopt 模块的程序使用的方法：
+
+根据上面的例子,比如我们写了一个程序叫 test.pl .我们只需要在命令行中加如下参数:
+
+
+复制代码 代码如下:$ ./test.pl  --verbose --verbose -v --more \       --lib='/lib' -l '/lib64' --f a=1 --flag b=2  --debug 2 -t fukai 
+有点小长,在看看上面的,就会明白意思了.在这个地方,我使用了 Smart::Comment 模块,所以在最下面的 ###  是会输出这个变量本身的内容的.这也是一个超级强大的模块.我们来看看输入这些参数后.会输出什么内容吧.
+
+
+复制代码 代码如下:
+### $verbose: 3 
+### $more: 1 
+### $debug: 2 
+### @libs: [ 
+###          '/lib', 
+###          '/lib64' 
+###        ] 
+### %flags: { 
+###           a => '1', 
+###           b => '2' 
+###         }
+
+在对一下上面输入的参数,明白了吧. 
+
+Getopt 模块的简单总结
+
+（1. 带值参数传入程序内部
+
+※参数类型：整数, 浮点数, 字串
+
+
+复制代码 代码如下:
+GetOptions( 
+    'tag=s' => \$tag
+); 
+
+‘='表示此参数一定要有参数值, 若改用':'代替表示参数不一定要有参数值
+‘s'表示传递字串参数, 若为'i'表传递整数参数, 若为'f'表传递浮点数.
+
+带值参数使用的方法
+
+
+复制代码 代码如下:
+$ test.pl --tag=string 
+$ test.pl --tag string 
+
+（2. 需要传送多个值的参数到程序中.
+
+比如需要传几个值到 @libfiles 中的操作方法.
+
+
+复制代码 代码如下:
+GetOptions ("library=s" => \@libfiles); 
+GetOptions ("library=s@" => \$libfiles); 
+
+参数传到 @$tag
+使用的方法
+
+
+复制代码 代码如下:$ test.pl --library lib/stdlib --library lib/extlib 
+（3. 对键值对的参数传递
+
+有时我们需要传送一些键值对到程序中进行处理,就需要使用到这个功能了.
+
+
+复制代码 代码如下:
+GetOptions ("define=s" => \%defines); 
+GetOptions ("define=s%" => \$defines); 
+
+使用的方法
+
+
+复制代码 代码如下:$ test.pl --define os=linux --define vendor=redhat 
+  (4. 参数的别名
+我们需要参数加个简写之类的别名时,可以使用下面的方法
+
+
+复制代码 代码如下:GetOptions ('length|height=f' => \$length); 
+第一个名称为 primary name, 其他的名称为 alias(可有多个alias名称) ,当使用hash参数时, 使用primary name作为key值
