@@ -1,0 +1,95 @@
+在数组中删除元素，除了可以用shift pop等处理一些特殊位置的数据，一般位置用undef $_等是不行的，虽然值不存在了，
+但index依然占用位置。
+
+比如说： @array = ('ray', 'loca', 'simon', 'ray'); 这里，我们想删除‘ray’这个元素。
+
+用下面的方法： foreach (@array){ if ($_ eq ray){ #undef $_; #$_=''; } } foreach(@array){ print $_."ok\n"; 
+} 可以证明无论是undef还是''都是不行的，位置依然存在。
+
+下面列出几种可行的方法： 1. 用grep函数。
+
+函数名	grep
+调用语法	@foundlist = grep (pattern, @searchlist);
+解说	与同名的UNIX查找工具类似，grep函数在列表中抽取与指定模式匹配的元素，参数pattern为欲查找的模式，返回值是匹配元素的列表。
+例子	@list = ("This", "is", "a", "test"); @foundlist = grep(/^[tT]/, @list);
+结果	@foundlist = ("This", "test");
+2. 用map函数
+
+函数名	map
+调用语法	@resultlist = map (expr, @list);
+解说	此函数在Perl5中定义，可以把列表中的各个元素作为表达式expr的操作数进行运算，其本身不改变，结果作为返回值。
+在表达式expr中，系统变量$_代表各个元素。
+例子	1、@list = (100, 200, 300); @results = map ($_+1, @list); 2、@results = map (&mysub($_), @list);
+结果	1、(101, 201, 301) 2、无
+3. 用splice或者delete
+
+函数名	splice
+调用语法	@retval = splice (@array, skipelements, length, @newlist);
+解说	拼接函数可以向列表（数组）中间插入元素、删除子列表或替换子列表。参数skipelements是拼接前跳过的元素数目，
+length是被替换的元素数，newlist是将要拼接进来的列表。当newlist的长度大于length时，后面的元素自动后移，反之则向前缩进。
+因此，当length=0 时，就相当于向列表中插入元素，而形如语句 splice (@array, -1, 0, "Hello"); 则向数组末尾添加元素。
+而当newlist为空时就相当于删除子列表，这时，如果length为空，就从第skipelements个元素后全部删除，
+而删除最后一个元素则为：splice (@array, -1);这种情况下，返回值为被删去的元素列表。
+
+两者都可以按照index直接删除array或者hash的元素。但是delete删除元素后, index后面的元素并不会 主动往前移动，该元素删除后，
+在array还留有一个undef的元素，显然删除得不够干净。
+
+下面用个小程序说明具体操作：
+
+
+复制代码
+#!/usr/bin/perl
+
+
+use strict;
+use warnings;
+
+my @array = ('ray', 'loca', 'simon', 'ray');
+my $wanted = 'ray';
+
+print "***show howto delete elements from array***\n\n";
+print "Old array is @array\n";
+
+# Method One: using grep
+
+@array = grep { $_ ne "$wanted" } @array;
+print "Now array is @array\n";
+
+# Method Two: using map
+
+@array = ('ray', 'loca', 'simon', 'ray');
+# Function: if the the input string isn't the wanted string
+# return the input string.
+sub my_print
+{
+my ( $input, $wanted ) = @_;
+return $input if ( $input ne $wanted );
+}
+@array = map { my_print($_, "$wanted") } @array;
+print "Now array is @array\n";
+
+# Method Three: using splice or delete
+@array = ('ray', 'loca', 'simon', 'ray');
+# The position of first "ray" is 0
+splice (@array, 0, 1);
+print "Now array is @array\n";
+# The position of first "ray" is 2
+
+splice @array, 2, 1;
+print "Now array is @array\n";
+复制代码
+
+程序运行结果为：
+
+[ray@localhost perl]$ ./array_ops.pl 
+***show howto delete 
+elements from array***
+
+Old array is ray loca simon ray
+Now array is 
+loca simon
+Now array is loca simon 
+Now array is loca simon ray
+Now 
+array is loca simon
+
